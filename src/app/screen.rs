@@ -49,6 +49,7 @@ pub fn run_viewer() {
         .add_systems(Startup, (setup_scene, viewer::setup_viewer))
         .add_systems(EguiPrimaryContextPass, ui_panel_system)
         .add_systems(Update, viewer::orbit_camera_system)
+        .add_systems(Update, viewer::update_sandbox_ground_system)
         .add_systems(Update, viewer::draw_dynamic_viewer_system)
         .add_systems(Update, viewer::update_viewer_entities_system)
         .add_systems(Update, apply_ui_actions_system)
@@ -78,6 +79,7 @@ fn setup_scene(
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(20.0, 20.0))),
         MeshMaterial3d(materials.add(Color::srgb(0.15, 0.15, 0.18))),
+        viewer::SandboxGround,
     ));
 }
 
