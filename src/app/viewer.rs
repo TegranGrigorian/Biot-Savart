@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::input::mouse::{MouseMotion, MouseWheel};
+use bevy::window::PrimaryWindow;
 
 use crate::app::screen::UiState;
 
@@ -12,6 +13,7 @@ pub(crate) struct OrbitCamera {
 	pub(crate) rotate_sensitivity: f32,
 	pub(crate) zoom_sensitivity: f32,
 	pub(crate) pan_sensitivity: f32,
+	pub(crate) last_cursor_pos: Option<Vec2>,
 }
 
 impl Default for OrbitCamera {
@@ -24,6 +26,7 @@ impl Default for OrbitCamera {
 			rotate_sensitivity: 0.004,
 			zoom_sensitivity: 0.12,
 			pan_sensitivity: 0.0025,
+			last_cursor_pos: None,
 		}
 	}
 }
@@ -112,11 +115,12 @@ pub(crate) fn orbit_camera_system(
 	keys: Res<ButtonInput<KeyCode>>,
 	mut mouse_motion: MessageReader<MouseMotion>,
 	mut mouse_wheel: MessageReader<MouseWheel>,
+	primary_window_q: Query<&Window, With<PrimaryWindow>>,
 	mut camera_q: Query<(&mut OrbitCamera, &mut Transform)>,
 ) {
-	let mut motion_delta = Vec2::ZERO;
+	let mut motion_delta_messages = Vec2::ZERO;
 	for ev in mouse_motion.read() {
-		motion_delta += ev.delta;
+		motion_delta_messages += ev.delta;
 	}
 
 	let mut scroll: f32 = 0.0;
@@ -124,19 +128,39 @@ pub(crate) fn orbit_camera_system(
 		scroll += ev.y;
 	}
 
+	let cursor_pos = primary_window_q
+		.single()
+		.ok()
+		.and_then(|window| window.cursor_position());
+
 	for (mut orbit, mut transform) in &mut camera_q {
+		let cursor_delta = match (cursor_pos, orbit.last_cursor_pos) {
+			(Some(current), Some(last)) => current - last,
+			_ => Vec2::ZERO,
+		};
+		orbit.last_cursor_pos = cursor_pos;
+
+		let motion_delta = if motion_delta_messages.length_squared() > 0.0 {
+			motion_delta_messages
+		} else {
+			cursor_delta
+		};
+
 		if scroll.abs() > f32::EPSILON {
 			let zoom_factor = 1.0 - scroll * orbit.zoom_sensitivity;
 			orbit.radius = (orbit.radius * zoom_factor).clamp(0.5, 150.0);
 		}
 
-		if mouse_buttons.pressed(MouseButton::Right) {
+		let rotate_mode = mouse_buttons.pressed(MouseButton::Right)
+			|| mouse_buttons.pressed(MouseButton::Left);
+
+		if rotate_mode {
 			orbit.yaw -= motion_delta.x * orbit.rotate_sensitivity;
 			orbit.pitch = (orbit.pitch - motion_delta.y * orbit.rotate_sensitivity).clamp(-1.54, 1.54);
 		}
 
 		let pan_mode = mouse_buttons.pressed(MouseButton::Middle)
-			|| (mouse_buttons.pressed(MouseButton::Right)
+			|| ((mouse_buttons.pressed(MouseButton::Right) || mouse_buttons.pressed(MouseButton::Left))
 				&& (keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight)));
 
 		if pan_mode {
