@@ -1,0 +1,1 @@
+WGPU_POWER_PREF=low cargo run

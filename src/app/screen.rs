@@ -1,6 +1,7 @@
 use bevy::prelude::*;
-use bevy_egui::{egui, EguiContexts, EguiPlugin};
-
+use bevy_egui::{egui, EguiContexts, EguiPlugin, EguiPrimaryContextPass};
+use crate::engine::components::wire::Wire;
+use crate::engine::components::point::Point;
 #[derive(Resource, Default)]
 struct UiState {
     current: f32,
@@ -20,10 +21,18 @@ pub fn run_viewer() {
             current: 1.0,
             ..Default::default()
         })
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Biot-Savart".to_string(),
+                resolution: (1280, 720).into(),
+                present_mode: bevy::window::PresentMode::AutoVsync,
+                ..Default::default()
+            }),
+            ..Default::default()
+        }))
         .add_plugins(EguiPlugin::default())
         .add_systems(Startup, setup_scene)
-        .add_systems(Update, ui_panel_system)
+        .add_systems(EguiPrimaryContextPass, ui_panel_system)
         .add_systems(Update, apply_ui_actions_system)
         .run();
 }
