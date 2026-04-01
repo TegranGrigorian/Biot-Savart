@@ -3,6 +3,31 @@ use bevy::prelude::*;
 use crate::app::screen::UiState;
 
 #[derive(Component)]
+pub(crate) struct OrbitCamera {
+	pub(crate) target: Vec3,
+	pub(crate) radius: f32,
+	pub(crate) yaw: f32,
+	pub(crate) pitch: f32,
+	pub(crate) rotate_sensitivity: f32,
+	pub(crate) zoom_sensitivity: f32,
+	pub(crate) pan_sensitivity: f32,
+}
+
+impl Default for OrbitCamera {
+	fn default() -> Self {
+		Self {
+			target: Vec3::ZERO,
+			radius: 12.0,
+			yaw: -0.5,
+			pitch: -0.4,
+			rotate_sensitivity: 0.004,
+			zoom_sensitivity: 0.12,
+			pan_sensitivity: 0.0025,
+		}
+	}
+}
+
+#[derive(Component)]
 pub(crate) struct ProbeMarker;
 
 #[derive(Component)]
@@ -75,9 +100,53 @@ pub(crate) fn draw_dynamic_viewer_system(ui_state: Res<UiState>, mut gizmos: Giz
 		let b = Vec3::new(b_vec.x, b_vec.y, b_vec.z);
 		if b.length_squared() > 1.0e-16 {
 			let b_dir = b.normalize();
-			let b_len = (b.length() * 5.0e7).clamp(0.25, 2.5);
+			let b_len = (0.15 + (b.length().log10() + 12.0).max(0.0) * 0.22).clamp(0.2, 1.8);
 			gizmos.arrow(probe, probe + b_dir * b_len, Color::srgb(0.2, 0.8, 1.0));
 		}
+	}
+}
+
+pub(crate) fn orbit_camera_system(
+	mouse_buttons: Res<ButtonInput<MouseButton>>,
+	keys: Res<ButtonInput<KeyCode>>,
+	mut mouse_motion: MessageReader<MouseMotion>,
+	mut mouse_wheel: MessageReader<MouseWheel>,
+	mut camera_q: Query<(&mut OrbitCamera, &mut Transform)>,
+) {
+	let mut motion_delta = Vec2::ZERO;
+	for ev in mouse_motion.read() {
+		motion_delta += ev.delta;
+	}
+
+	let mut scroll = 0.0;
+	for ev in mouse_wheel.read() {
+		scroll += ev.y;
+	}
+
+	for (mut orbit, mut transform) in &mut camera_q {
+		if scroll.abs() > f32::EPSILON {
+			let zoom_factor = 1.0 - scroll * orbit.zoom_sensitivity;
+			orbit.radius = (orbit.radius * zoom_factor).clamp(0.5, 150.0);
+		}
+
+		if mouse_buttons.pressed(MouseButton::Right) {
+			orbit.yaw -= motion_delta.x * orbit.rotate_sensitivity;
+			orbit.pitch = (orbit.pitch - motion_delta.y * orbit.rotate_sensitivity).clamp(-1.54, 1.54);
+		}
+
+		let pan_mode = mouse_buttons.pressed(MouseButton::Middle)
+			|| (mouse_buttons.pressed(MouseButton::Right)
+				&& (keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight)));
+
+		if pan_mode {
+			let right = transform.rotation * Vec3::X;
+			let up = transform.rotation * Vec3::Y;
+			orbit.target += (-right * motion_delta.x + up * motion_delta.y) * orbit.pan_sensitivity * orbit.radius;
+		}
+
+		let rotation = Quat::from_euler(EulerRot::YXZ, orbit.yaw, orbit.pitch, 0.0);
+		transform.translation = orbit.target + rotation * Vec3::new(0.0, 0.0, orbit.radius);
+		transform.look_at(orbit.target, Vec3::Y);
 	}
 }
 

@@ -48,6 +48,7 @@ pub fn run_viewer() {
         .add_plugins(EguiPlugin::default())
         .add_systems(Startup, (setup_scene, viewer::setup_viewer))
         .add_systems(EguiPrimaryContextPass, ui_panel_system)
+        .add_systems(Update, viewer::orbit_camera_system)
         .add_systems(Update, viewer::draw_dynamic_viewer_system)
         .add_systems(Update, viewer::update_viewer_entities_system)
         .add_systems(Update, apply_ui_actions_system)
@@ -61,6 +62,7 @@ fn setup_scene(
 ) {
     commands.spawn((
         Camera3d::default(),
+        viewer::OrbitCamera::default(),
         Transform::from_xyz(6.0, 6.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
