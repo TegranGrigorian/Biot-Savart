@@ -4,9 +4,7 @@ use bevy::window::PrimaryWindow;
 use bevy_egui::{egui, EguiContexts};
 
 use crate::app::screen::UiState;
-
-const BASE_GROUND_SIZE: f32 = 20.0;
-const MIN_B_RENDER_MAG: f32 = 1.0e-18;
+use crate::constants;
 
 #[derive(Component)]
 pub(crate) struct OrbitCamera {
@@ -85,7 +83,7 @@ fn b_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
 	let b_vec = ui_state.last_b_vec?;
 	let b = Vec3::new(b_vec.x, b_vec.y, b_vec.z);
 	let b_mag = b.length();
-	if b_mag < MIN_B_RENDER_MAG {
+	if b_mag < constants::MIN_B_RENDER_MAG {
 		return None;
 	}
 
@@ -148,7 +146,7 @@ pub(crate) fn update_sandbox_ground_system(
 	let (center, half_extent) = sandbox_center_and_half_extent(&ui_state);
 	if let Ok(mut transform) = ground_q.single_mut() {
 		let size = half_extent * 2.0;
-		let plane_scale = size / BASE_GROUND_SIZE;
+		let plane_scale = size / constants::BASE_GROUND_SIZE;
 		transform.translation = Vec3::new(center.x, 0.0, center.z);
 		transform.scale = Vec3::new(plane_scale, 1.0, plane_scale);
 	}
