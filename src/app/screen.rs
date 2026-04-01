@@ -47,7 +47,7 @@ pub fn run_viewer() {
         }))
         .add_plugins(EguiPlugin::default())
         .add_systems(Startup, (setup_scene, viewer::setup_viewer))
-        .add_systems(EguiPrimaryContextPass, ui_panel_system)
+        .add_systems(EguiPrimaryContextPass, (ui_panel_system, viewer::draw_overlay_labels_system))
         .add_systems(Update, viewer::orbit_camera_system)
         .add_systems(Update, viewer::update_sandbox_ground_system)
         .add_systems(Update, viewer::draw_dynamic_viewer_system)

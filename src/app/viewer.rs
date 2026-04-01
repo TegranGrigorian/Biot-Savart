@@ -1,11 +1,12 @@
 use bevy::prelude::*;
 use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::window::PrimaryWindow;
+use bevy_egui::{egui, EguiContexts};
 
 use crate::app::screen::UiState;
 
 const BASE_GROUND_SIZE: f32 = 20.0;
-const MIN_B_RENDER_MAG: f32 = 1.0e-30;
+const MIN_B_RENDER_MAG: f32 = 1.0e-18;
 
 #[derive(Component)]
 pub(crate) struct OrbitCamera {
@@ -38,27 +39,15 @@ impl Default for OrbitCamera {
 pub(crate) struct ProbeMarker;
 
 #[derive(Component)]
-pub(crate) struct WireLabel;
-
-#[derive(Component)]
-pub(crate) struct ProbeLabel;
-
-#[derive(Component)]
-pub(crate) struct CurrentLabel;
-
-#[derive(Component)]
-pub(crate) struct BFieldLabel;
-
-#[derive(Component)]
 pub(crate) struct SandboxGround;
 
 fn current_arrow_length(current_mag: f32) -> f32 {
-	(0.25 + current_mag.sqrt() * 0.35).clamp(0.25, 4.0)
+	(0.22 + current_mag.sqrt() * 0.28).clamp(0.22, 3.5)
 }
 
 fn b_arrow_length(b_mag: f32) -> f32 {
-	let log_mag = b_mag.max(MIN_B_RENDER_MAG).log10();
-	(0.25 + (log_mag + 14.0).max(0.0) * 0.33).clamp(0.25, 4.5)
+	let normalized = (b_mag / 1.0e-9).max(1.0e-6);
+	(0.20 + normalized.powf(0.25) * 0.55).clamp(0.20, 4.5)
 }
 
 fn current_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
@@ -127,54 +116,10 @@ pub(crate) fn setup_viewer(
 	mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
 	commands.spawn((
-		Mesh3d(meshes.add(Sphere::new(0.10).mesh().uv(24, 16))),
+		Mesh3d(meshes.add(Sphere::new(0.06).mesh().uv(24, 16))),
 		MeshMaterial3d(materials.add(Color::srgb(0.9, 0.25, 0.2))),
 		Transform::from_xyz(0.0, 0.0, 0.0),
 		ProbeMarker,
-	));
-
-	commands.spawn((
-		Text2d::new("Wire 1"),
-		TextFont {
-			font_size: 20.0,
-			..Default::default()
-		},
-		TextColor(Color::srgb(1.0, 0.95, 0.7)),
-		Transform::from_xyz(0.0, 0.35, 0.0),
-		WireLabel,
-	));
-
-	commands.spawn((
-		Text2d::new("Probe"),
-		TextFont {
-			font_size: 18.0,
-			..Default::default()
-		},
-		TextColor(Color::srgb(0.8, 1.0, 1.0)),
-		Transform::from_xyz(0.0, 0.25, 0.0),
-		ProbeLabel,
-	));
-
-	commands.spawn((
-		Text2d::new("I = 0.0 A"),
-		TextFont {
-			font_size: 16.0,
-			..Default::default()
-		},
-		TextColor(Color::srgb(0.7, 1.0, 0.7)),
-		Transform::from_xyz(0.0, 0.55, 0.0),
-		CurrentLabel,
-	));
-
-	commands.spawn((
-		Text2d::new("B = 0.0 T"),
-		TextFont {
-			font_size: 16.0,
-			..Default::default()
-		},
-		TextColor(Color::srgb(0.5, 0.9, 1.0)),
-		Transform::from_xyz(0.0, 0.8, 0.0),
-		BFieldLabel,
 	));
 }
 
@@ -278,62 +223,86 @@ pub(crate) fn orbit_camera_system(
 
 pub(crate) fn update_viewer_entities_system(
 	ui_state: Res<UiState>,
-	mut queries: ParamSet<(
-		Query<&mut Transform, With<ProbeMarker>>,
-		Query<(&mut Transform, &mut Text2d), With<WireLabel>>,
-		Query<(&mut Transform, &mut Text2d), With<ProbeLabel>>,
-		Query<(&mut Transform, &mut Text2d), With<CurrentLabel>>,
-		Query<(&mut Transform, &mut Text2d), With<BFieldLabel>>,
-	)>,
+	mut probe_q: Query<&mut Transform, With<ProbeMarker>>,
 ) {
 	let probe_pos = Vec3::new(ui_state.probe_x, ui_state.probe_y, ui_state.probe_z);
 
-	if let Ok(mut probe_transform) = queries.p0().single_mut() {
+	if let Ok(mut probe_transform) = probe_q.single_mut() {
 		probe_transform.translation = probe_pos;
 	}
+}
 
-	if let Ok((mut wire_label_transform, mut wire_text)) = queries.p1().single_mut() {
-		let wire_anchor = ui_state
-			.wire_points
-			.first()
-			.map(|p| Vec3::new(p.x, p.y, p.z))
-			.unwrap_or(Vec3::ZERO);
-		wire_label_transform.translation = wire_anchor + Vec3::new(0.0, 0.35, 0.0);
-		*wire_text = Text2d::new(ui_state.wire_name.clone());
-	}
+pub(crate) fn draw_overlay_labels_system(
+	mut contexts: EguiContexts,
+	ui_state: Res<UiState>,
+	camera_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+) {
+	let Ok((camera, camera_transform)) = camera_q.single() else {
+		return;
+	};
 
-	if let Ok((mut probe_label_transform, mut probe_text)) = queries.p2().single_mut() {
-		probe_label_transform.translation = probe_pos + Vec3::new(0.0, 0.25, 0.0);
-		*probe_text = Text2d::new(ui_state.probe_name.clone());
-	}
+	let Ok(ctx) = contexts.ctx_mut() else {
+		return;
+	};
 
-	if let Ok((mut current_label_transform, mut current_text)) = queries.p3().single_mut() {
-		if let Some((start, end, current_mag)) = current_arrow(&ui_state) {
-			current_label_transform.translation = (start + end) * 0.5 + Vec3::new(0.0, 0.25, 0.0);
-			*current_text = Text2d::new(format!(
-				"I [{}] = {:.3} A",
-				ui_state.wire_name,
-				if ui_state.current.is_sign_negative() {
-					-current_mag
-				} else {
-					current_mag
-				}
-			));
-		} else {
-			*current_text = Text2d::new(format!("I [{}] = {:.3} A", ui_state.wire_name, ui_state.current));
+	let painter = ctx.layer_painter(egui::LayerId::new(
+		egui::Order::Foreground,
+		egui::Id::new("viewer_overlay_labels"),
+	));
+
+	let draw_label = |world_pos: Vec3, text: String, color: egui::Color32, painter: &egui::Painter| {
+		if let Ok(screen_pos) = camera.world_to_viewport(camera_transform, world_pos) {
+			painter.text(
+				egui::pos2(screen_pos.x + 8.0, screen_pos.y - 8.0),
+				egui::Align2::LEFT_BOTTOM,
+				text,
+				egui::FontId::proportional(16.0),
+				color,
+			);
 		}
+	};
+
+	if let Some(first) = ui_state.wire_points.first() {
+		draw_label(
+			Vec3::new(first.x, first.y, first.z) + Vec3::new(0.0, 0.22, 0.0),
+			ui_state.wire_name.clone(),
+			egui::Color32::from_rgb(255, 230, 170),
+			&painter,
+		);
 	}
 
-	if let Ok((mut b_label_transform, mut b_text)) = queries.p4().single_mut() {
-		if let Some((_, end, b_mag)) = b_arrow(&ui_state) {
-			b_label_transform.translation = end + Vec3::new(0.0, 0.25, 0.0);
-			*b_text = Text2d::new(format!("B [{}] = {:.3e} T", ui_state.probe_name, b_mag));
-		} else if let Some(err) = &ui_state.last_error {
-			b_label_transform.translation = probe_pos + Vec3::new(0.0, 0.45, 0.0);
-			*b_text = Text2d::new(format!("B error: {}", err));
-		} else {
-			b_label_transform.translation = probe_pos + Vec3::new(0.0, 0.45, 0.0);
-			*b_text = Text2d::new("B = 0.0 T");
-		}
+	let probe_pos = Vec3::new(ui_state.probe_x, ui_state.probe_y, ui_state.probe_z);
+	draw_label(
+		probe_pos + Vec3::new(0.0, 0.18, 0.0),
+		ui_state.probe_name.clone(),
+		egui::Color32::from_rgb(175, 245, 255),
+		&painter,
+	);
+
+	if let Some((start, end, current_mag)) = current_arrow(&ui_state) {
+		draw_label(
+			(start + end) * 0.5 + Vec3::new(0.0, 0.22, 0.0),
+			format!("I = {:.3} A", if ui_state.current.is_sign_negative() { -current_mag } else { current_mag }),
+			egui::Color32::from_rgb(160, 255, 160),
+			&painter,
+		);
+	}
+
+	if let Some((_, end, b_mag)) = b_arrow(&ui_state) {
+		draw_label(
+			end + Vec3::new(0.0, 0.20, 0.0),
+			format!("|B| = {:.3e} T", b_mag),
+			egui::Color32::from_rgb(130, 230, 255),
+			&painter,
+		);
+	}
+
+	if let Some(err) = &ui_state.last_error {
+		draw_label(
+			probe_pos + Vec3::new(0.0, 0.38, 0.0),
+			format!("B error: {}", err),
+			egui::Color32::from_rgb(255, 130, 130),
+			&painter,
+		);
 	}
 }
