@@ -3,13 +3,13 @@ use bevy::prelude::*;
 use crate::app::screen::UiState;
 
 #[derive(Component)]
-struct ProbeMarker;
+pub(crate) struct ProbeMarker;
 
 #[derive(Component)]
-struct WireLabel;
+pub(crate) struct WireLabel;
 
 #[derive(Component)]
-struct ProbeLabel;
+pub(crate) struct ProbeLabel;
 
 pub(crate) fn setup_viewer(
 	mut commands: Commands,
