@@ -75,7 +75,7 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
 
         ui.separator();
         ui.label("Current (A)");
-        ui.add(egui::Slider::new(&mut ui_state.current, -20.0..=20.0));
+        ui.add(egui::DragValue::new(&mut ui_state.current).speed(0.1).prefix("A: "));
 
         ui.separator();
         ui.label("Wire point");
