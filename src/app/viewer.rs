@@ -130,12 +130,14 @@ pub(crate) fn draw_dynamic_viewer_system(ui_state: Res<UiState>, mut gizmos: Giz
 		}
 	}
 
-	if let Some((start, end, _)) = current_arrow(&ui_state) {
-		gizmos.arrow(start, end, Color::srgb(0.2, 1.0, 0.2));
-	}
+	if ui_state.show_arrows {
+		if let Some((start, end, _)) = current_arrow(&ui_state) {
+			gizmos.arrow(start, end, Color::srgb(0.2, 1.0, 0.2));
+		}
 
-	if let Some((start, end, _)) = b_arrow(&ui_state) {
-		gizmos.arrow(start, end, Color::srgb(0.2, 0.8, 1.0));
+		if let Some((start, end, _)) = b_arrow(&ui_state) {
+			gizmos.arrow(start, end, Color::srgb(0.2, 0.8, 1.0));
+		}
 	}
 }
 
@@ -193,17 +195,21 @@ pub(crate) fn orbit_camera_system(
 			orbit.radius = (orbit.radius * zoom_factor).clamp(0.5, 150.0);
 		}
 
-		let rotate_mode = mouse_buttons.pressed(MouseButton::Right)
-			|| mouse_buttons.pressed(MouseButton::Left);
+		let ctrl_pressed = keys.pressed(KeyCode::ControlLeft) || keys.pressed(KeyCode::ControlRight);
+
+		let pan_mode = mouse_buttons.pressed(MouseButton::Middle)
+			|| (ctrl_pressed && mouse_buttons.pressed(MouseButton::Left))
+			|| ((mouse_buttons.pressed(MouseButton::Right) || mouse_buttons.pressed(MouseButton::Left))
+				&& (keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight)));
+
+		let rotate_mode = (mouse_buttons.pressed(MouseButton::Right)
+			|| mouse_buttons.pressed(MouseButton::Left))
+			&& !pan_mode;
 
 		if rotate_mode {
 			orbit.yaw -= motion_delta.x * orbit.rotate_sensitivity;
 			orbit.pitch = (orbit.pitch - motion_delta.y * orbit.rotate_sensitivity).clamp(-1.54, 1.54);
 		}
-
-		let pan_mode = mouse_buttons.pressed(MouseButton::Middle)
-			|| ((mouse_buttons.pressed(MouseButton::Right) || mouse_buttons.pressed(MouseButton::Left))
-				&& (keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight)));
 
 		if pan_mode {
 			let right = transform.rotation * Vec3::X;
@@ -235,6 +241,10 @@ pub(crate) fn draw_overlay_labels_system(
 	ui_state: Res<UiState>,
 	camera_q: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
 ) {
+	if !ui_state.show_labels {
+		return;
+	}
+
 	let Ok((camera, camera_transform)) = camera_q.single() else {
 		return;
 	};
