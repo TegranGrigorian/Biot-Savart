@@ -11,7 +11,7 @@ struct WireLabel;
 #[derive(Component)]
 struct ProbeLabel;
 
-pub fn setup_viewer(
+pub(crate) fn setup_viewer(
 	mut commands: Commands,
 	mut meshes: ResMut<Assets<Mesh>>,
 	mut materials: ResMut<Assets<StandardMaterial>>,
@@ -46,7 +46,7 @@ pub fn setup_viewer(
 	));
 }
 
-pub fn draw_dynamic_viewer_system(ui_state: Res<UiState>, mut gizmos: Gizmos) {
+pub(crate) fn draw_dynamic_viewer_system(ui_state: Res<UiState>, mut gizmos: Gizmos) {
 	if ui_state.wire_points.len() >= 2 {
 		for seg in ui_state.wire_points.windows(2) {
 			let start = Vec3::new(seg[0].x, seg[0].y, seg[0].z);
@@ -81,7 +81,7 @@ pub fn draw_dynamic_viewer_system(ui_state: Res<UiState>, mut gizmos: Gizmos) {
 	}
 }
 
-pub fn update_viewer_entities_system(
+pub(crate) fn update_viewer_entities_system(
 	ui_state: Res<UiState>,
 	mut probe_q: Query<&mut Transform, With<ProbeMarker>>,
 	mut wire_label_q: Query<(&mut Transform, &mut Text2d), (With<WireLabel>, Without<ProbeLabel>)>,

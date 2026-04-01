@@ -97,8 +97,7 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
             ui_state.dirty = true;
         }
 
-        ui.label("Current (A)");
-        ui.label("(Arrow updates live)");
+        ui.label("(Current arrow updates live)");
 
         ui.separator();
         ui.label("Wire point");
