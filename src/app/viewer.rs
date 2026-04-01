@@ -68,7 +68,7 @@ fn current_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
 
 	let dir = seg.normalize() * ui_state.current.signum();
 	let mid = Vec3::new(
-		(p0.x + p1.x) * 0.5,
+		(p0.x + p1.x) * 0.5, // mid point, just x1 + x2 / 2.
 		(p0.y + p1.y) * 0.5,
 		(p0.z + p1.z) * 0.5,
 	);
@@ -117,7 +117,7 @@ pub(crate) fn setup_viewer(
 	commands.spawn((
 		Mesh3d(meshes.add(Sphere::new(0.01).mesh().uv(24, 16))),
 		MeshMaterial3d(materials.add(StandardMaterial {
-			base_color: Color::srgb(1.0, 0.45, 0.1),
+			base_color: config::POINT_COLOR, // Color::srgb(1.0, 0.45, 0.1)
 			unlit: true,
 			..Default::default()
 		})),
