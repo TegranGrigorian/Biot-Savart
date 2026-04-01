@@ -49,7 +49,7 @@ impl Math {
                     continue;
                 }
 
-                b_vec += constants::k * current * dl.cross(&r) / r_norm.powi(3);
+                b_vec += constants::K * current * dl.cross(&r) / r_norm.powi(3);
             }
         }
 
