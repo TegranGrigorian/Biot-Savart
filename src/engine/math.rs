@@ -1,39 +1,59 @@
-use core::f32;
-
 use nalgebra::Vector3;
 
 use crate::constants;
 use crate::engine::components::point::Point;
 use crate::engine::components::wire::Wire;
+
 pub struct Math;
 
 impl Math {
     pub fn calculate_biot_savart(wire: Wire, point: Point, current: f32) -> Result<f32, String> {
-        // get segment lengths
-        let output: f32 = 0.0;
+        if wire.points.len() < 2 {
+            return Err("Wire needs at least 2 points".to_string());
+        }
+
         let mut total_length: f32 = 0.0;
-        let mut dB = Vector3::new(0.0, 0.00, 0.0);
-        for i in 0..wire.points.len() -1 {
+        for i in 0..wire.points.len() - 1 {
             total_length += (wire.points[i + 1] - wire.points[i]).norm();
         }
 
-        let db_length = total_length / (constants::DIVIDER as f32);
-        for i in 0..wire.points.len() -1 {
-            let seg_vec = (wire.points[i + 1] - wire.points[i]);
+        if total_length <= 0.0 {
+            return Err("Wire length must be greater than zero".to_string());
+        }
+
+        let dl_length = total_length / (constants::DIVIDER as f32);
+        let k = constants::MU_0 / (4.0 * std::f32::consts::PI);
+        let mut b_vec = Vector3::new(0.0, 0.0, 0.0);
+
+        for i in 0..wire.points.len() - 1 {
+            let p0 = wire.points[i];
+            let p1 = wire.points[i + 1];
+
+            let seg_vec = p1 - p0;
             let seg_len = seg_vec.norm();
+            if seg_len == 0.0 {
+                continue;
+            }
+
             let seg_dir = seg_vec / seg_len;
-            let n = (seg_len / db_length).ceil() as i16;
-            let step = (seg_len / (n as f32));
-            if seg_len == 0.0{continue;}
+            let n = ((seg_len / dl_length).ceil() as usize).max(1);
+            let step = seg_len / n as f32;
             let dl = seg_dir * step;
+
             for j in 0..n {
-                let t_mid = ((j as f32) + 0.5) / (n as f32);
-                let source: nalgebra::Matrix<f32, nalgebra::Const<3>, nalgebra::Const<1>, nalgebra::ArrayStorage<f32, 3, 1>> = &point.cords + seg_vec * t_mid;
-                let R = point.cords - source;
-                let R_norm = R.norm();
-                dB += constants::MU_0 * current * (((dl.cross(&R))) / R_norm.powf(3.0)); 
+                let t_mid = (j as f32 + 0.5) / n as f32;
+                let source = p0 + seg_vec * t_mid;
+                let r = point.cords - source;
+                let r_norm = r.norm();
+
+                if r_norm < 1.0e-8 {
+                    continue;
+                }
+
+                b_vec += k * current * dl.cross(&r) / r_norm.powi(3);
             }
         }
-        Ok(output)
+
+        Ok(b_vec.norm())
     }
 }
