@@ -58,11 +58,14 @@ impl Math {
     }
 
     pub fn test_calc_bs() {
-        let wire = Wire {name: String::from("Wire 1"), 
-        points: vec![
+        // let wire = Wire {name: String::from("Wire 1"), 
+        // points: vec![
+        //     Vector3::new(0.0, 0.0, 0.0), 
+        //     Vector3::new(0.01, 0.0, 0.0)] 
+        // };
+          let wire: Wire = Wire::new(String::from("Wire 1"), vec![
             Vector3::new(0.0, 0.0, 0.0), 
-            Vector3::new(0.01, 0.0, 0.0)] 
-        };
+            Vector3::new(0.01, 0.0, 0.0)]);
         let point: Point = Point {name: String::from("p1"), 
         cords: Vector3::new(0.0, 1.0, 0.0)
         };
