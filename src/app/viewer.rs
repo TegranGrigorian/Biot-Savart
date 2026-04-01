@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::input::mouse::{MouseMotion, MouseWheel};
 
 use crate::app::screen::UiState;
 
@@ -118,7 +119,7 @@ pub(crate) fn orbit_camera_system(
 		motion_delta += ev.delta;
 	}
 
-	let mut scroll = 0.0;
+	let mut scroll: f32 = 0.0;
 	for ev in mouse_wheel.read() {
 		scroll += ev.y;
 	}
@@ -141,7 +142,9 @@ pub(crate) fn orbit_camera_system(
 		if pan_mode {
 			let right = transform.rotation * Vec3::X;
 			let up = transform.rotation * Vec3::Y;
-			orbit.target += (-right * motion_delta.x + up * motion_delta.y) * orbit.pan_sensitivity * orbit.radius;
+			let pan_sensitivity = orbit.pan_sensitivity;
+			let radius = orbit.radius;
+			orbit.target += (-right * motion_delta.x + up * motion_delta.y) * pan_sensitivity * radius;
 		}
 
 		let rotation = Quat::from_euler(EulerRot::YXZ, orbit.yaw, orbit.pitch, 0.0);
