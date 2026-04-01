@@ -7,11 +7,7 @@ use crate::engine::components::wire::Wire;
 pub struct Math;
 
 impl Math {
-    pub fn calculate_biot_savart_vector(
-        wire: Wire,
-        point: Point,
-        current: f32,
-    ) -> Result<Vector3<f32>, String> {
+    fn get_dl_length(wire: &Wire) -> Result<f32, String> {
         if wire.points.len() < 2 {
             return Err("Wire needs at least 2 points".to_string());
         }
@@ -26,6 +22,16 @@ impl Math {
         }
 
         let dl_length = total_length / (constants::DIVIDER as f32);
+        Ok(dl_length)
+        
+    }
+
+    pub fn calculate_biot_savart_vector(
+        wire: Wire,
+        point: Point,
+        current: f32,
+    ) -> Result<Vector3<f32>, String> {
+        let dl_length = Self::get_dl_length(&wire)?;
         let mut b_vec = Vector3::new(0.0, 0.0, 0.0);
 
         for i in 0..wire.points.len() - 1 {
