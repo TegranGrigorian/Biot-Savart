@@ -1,0 +1,3 @@
+pub const ROTATE_SENSITIVITY: f32 = 0.004;
+pub const ZOOM_SENSITIVITY:f32 = 0.0025;
+pub const PAN_SENSITIVITY: f32 = 0.0025;

@@ -3,6 +3,7 @@ use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::window::PrimaryWindow;
 use bevy_egui::{egui, EguiContexts};
 
+use crate::app::config;
 use crate::app::screen::UiState;
 use crate::constants;
 
@@ -25,9 +26,9 @@ impl Default for OrbitCamera {
 			radius: 12.0,
 			yaw: -0.5,
 			pitch: -0.4,
-			rotate_sensitivity: 0.004,
-			zoom_sensitivity: 0.0025,
-			pan_sensitivity: 0.0025,
+			rotate_sensitivity: config::ROTATE_SENSITIVITY,
+			zoom_sensitivity: config::ZOOM_SENSITIVITY,
+			pan_sensitivity: config::PAN_SENSITIVITY,
 			last_cursor_pos: None,
 		}
 	}
