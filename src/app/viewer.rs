@@ -249,16 +249,32 @@ pub(crate) fn draw_overlay_labels_system(
 		egui::Order::Foreground,
 		egui::Id::new("viewer_overlay_labels"),
 	));
+	let mut occupied: Vec<egui::Rect> = Vec::new();
 
-	let draw_label = |world_pos: Vec3, text: String, color: egui::Color32, painter: &egui::Painter| {
+	let mut draw_label = |world_pos: Vec3, text: String, color: egui::Color32| {
 		if let Ok(screen_pos) = camera.world_to_viewport(camera_transform, world_pos) {
-			painter.text(
-				egui::pos2(screen_pos.x + 8.0, screen_pos.y - 8.0),
-				egui::Align2::LEFT_BOTTOM,
-				text,
-				egui::FontId::proportional(16.0),
-				color,
+			let galley = painter.layout_no_wrap(text, egui::FontId::proportional(16.0), color);
+			let mut pos = egui::pos2(screen_pos.x + 8.0, screen_pos.y - 8.0);
+			let mut rect = egui::Rect::from_min_size(pos, galley.size());
+
+			for _ in 0..8 {
+				let overlaps = occupied
+					.iter()
+					.any(|used| used.expand(5.0).intersects(rect));
+				if !overlaps {
+					break;
+				}
+				pos.y += galley.size().y + 6.0;
+				rect = egui::Rect::from_min_size(pos, galley.size());
+			}
+
+			painter.rect_filled(
+				rect.expand2(egui::vec2(4.0, 2.0)),
+				4.0,
+				egui::Color32::from_black_alpha(110),
 			);
+			painter.galley(pos, galley, color);
+			occupied.push(rect);
 		}
 	};
 
@@ -267,7 +283,6 @@ pub(crate) fn draw_overlay_labels_system(
 			Vec3::new(first.x, first.y, first.z) + Vec3::new(0.0, 0.22, 0.0),
 			ui_state.wire_name.clone(),
 			egui::Color32::from_rgb(255, 230, 170),
-			&painter,
 		);
 	}
 
@@ -276,7 +291,6 @@ pub(crate) fn draw_overlay_labels_system(
 		probe_pos + Vec3::new(0.0, 0.18, 0.0),
 		ui_state.probe_name.clone(),
 		egui::Color32::from_rgb(175, 245, 255),
-		&painter,
 	);
 
 	if let Some((start, end, current_mag)) = current_arrow(&ui_state) {
@@ -284,7 +298,6 @@ pub(crate) fn draw_overlay_labels_system(
 			(start + end) * 0.5 + Vec3::new(0.0, 0.22, 0.0),
 			format!("I = {:.3} A", if ui_state.current.is_sign_negative() { -current_mag } else { current_mag }),
 			egui::Color32::from_rgb(160, 255, 160),
-			&painter,
 		);
 	}
 
@@ -293,7 +306,26 @@ pub(crate) fn draw_overlay_labels_system(
 			end + Vec3::new(0.0, 0.20, 0.0),
 			format!("|B| = {:.3e} T", b_mag),
 			egui::Color32::from_rgb(130, 230, 255),
-			&painter,
+		);
+
+		if let Some(b_vec) = ui_state.last_b_vec {
+			draw_label(
+				end + Vec3::new(0.0, 0.48, 0.0),
+				format!(
+					"B = ({:.2e}) i^ + ({:.2e}) j^ + ({:.2e}) k^ T",
+					b_vec.x, b_vec.y, b_vec.z
+				),
+				egui::Color32::from_rgb(150, 235, 255),
+			);
+		}
+	} else if let Some(b_vec) = ui_state.last_b_vec {
+		draw_label(
+			probe_pos + Vec3::new(0.0, 0.22, 0.0),
+			format!(
+				"B = ({:.2e}) i^ + ({:.2e}) j^ + ({:.2e}) k^ T",
+				b_vec.x, b_vec.y, b_vec.z
+			),
+			egui::Color32::from_rgb(150, 235, 255),
 		);
 	}
 
@@ -302,7 +334,6 @@ pub(crate) fn draw_overlay_labels_system(
 			probe_pos + Vec3::new(0.0, 0.38, 0.0),
 			format!("B error: {}", err),
 			egui::Color32::from_rgb(255, 130, 130),
-			&painter,
 		);
 	}
 }
