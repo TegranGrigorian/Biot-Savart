@@ -55,13 +55,4 @@ impl Math {
 
         Ok(b_vec.norm())
     }
-
-    pub fn test_calc_bs() {
-        let wire: Wire = Wire::new(String::from("Wire 1"), vec![
-            Vector3::new(0.0, 0.0, 0.0), 
-            Vector3::new(0.01, 0.0, 0.0)]);
-        let point: Point = Point::new(String::from("P1"), Vector3::new(0.0, 1.0, 0.0));
-        let output = Math::calculate_biot_savart(wire, point, 2.0);
-        println!("Output: {:.2e}", &output.unwrap());
-    }
 }

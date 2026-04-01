@@ -1,4 +1,4 @@
-use Biot_Savart::engine;
+use Biot_Savart::{engine, test};
 use nalgebra::Vector3;
 mod constants;
 use engine::components::wire::Wire;
@@ -12,5 +12,5 @@ fn main() {
     println!("Point Name: {} at {:?}", point.name, point.cords);
 
     println!("\n\n Test");
-    engine::math::Math::test_calc_bs();
+    test::test_biot_savart();
 }
