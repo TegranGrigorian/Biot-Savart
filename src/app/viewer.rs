@@ -83,17 +83,19 @@ pub(crate) fn draw_dynamic_viewer_system(ui_state: Res<UiState>, mut gizmos: Giz
 
 pub(crate) fn update_viewer_entities_system(
 	ui_state: Res<UiState>,
-	mut probe_q: Query<&mut Transform, With<ProbeMarker>>,
-	mut wire_label_q: Query<(&mut Transform, &mut Text2d), (With<WireLabel>, Without<ProbeLabel>)>,
-	mut probe_label_q: Query<(&mut Transform, &mut Text2d), (With<ProbeLabel>, Without<WireLabel>)>,
+	mut queries: ParamSet<(
+		Query<&mut Transform, With<ProbeMarker>>,
+		Query<(&mut Transform, &mut Text2d), With<WireLabel>>,
+		Query<(&mut Transform, &mut Text2d), With<ProbeLabel>>,
+	)>,
 ) {
 	let probe_pos = Vec3::new(ui_state.probe_x, ui_state.probe_y, ui_state.probe_z);
 
-	if let Ok(mut probe_transform) = probe_q.single_mut() {
+	if let Ok(mut probe_transform) = queries.p0().single_mut() {
 		probe_transform.translation = probe_pos;
 	}
 
-	if let Ok((mut wire_label_transform, mut wire_text)) = wire_label_q.single_mut() {
+	if let Ok((mut wire_label_transform, mut wire_text)) = queries.p1().single_mut() {
 		let wire_anchor = ui_state
 			.wire_points
 			.first()
@@ -103,7 +105,7 @@ pub(crate) fn update_viewer_entities_system(
 		*wire_text = Text2d::new(ui_state.wire_name.clone());
 	}
 
-	if let Ok((mut probe_label_transform, mut probe_text)) = probe_label_q.single_mut() {
+	if let Ok((mut probe_label_transform, mut probe_text)) = queries.p2().single_mut() {
 		probe_label_transform.translation = probe_pos + Vec3::new(0.0, 0.25, 0.0);
 		*probe_text = Text2d::new(ui_state.probe_name.clone());
 	}
