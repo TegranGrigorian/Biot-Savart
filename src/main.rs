@@ -10,4 +10,7 @@ fn main() {
     println!("Test cross product: {:?}",  wire1.points[0].cross(&point.cords));
     println!("Mu0 {}", constants::MU_0);
     println!("Point Name: {} at {:?}", point.name, point.cords);
+
+    println!("\n\n Test");
+    engine::math::Math::test_calc_bs();
 }
