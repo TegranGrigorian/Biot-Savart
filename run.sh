@@ -1,1 +1,1 @@
-WGPU_POWER_PREF=low cargo run
+WGPU_POWER_PREF=low cargo run # I use arch btw so i need this :(
