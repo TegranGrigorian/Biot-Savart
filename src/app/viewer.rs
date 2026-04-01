@@ -26,7 +26,7 @@ impl Default for OrbitCamera {
 			yaw: -0.5,
 			pitch: -0.4,
 			rotate_sensitivity: 0.004,
-			zoom_sensitivity: 0.12,
+			zoom_sensitivity: 0.05,
 			pan_sensitivity: 0.0025,
 			last_cursor_pos: None,
 		}
@@ -114,8 +114,12 @@ pub(crate) fn setup_viewer(
 	mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
 	commands.spawn((
-		Mesh3d(meshes.add(Sphere::new(0.06).mesh().uv(24, 16))),
-		MeshMaterial3d(materials.add(Color::srgb(0.9, 0.25, 0.2))),
+		Mesh3d(meshes.add(Sphere::new(0.01).mesh().uv(24, 16))),
+		MeshMaterial3d(materials.add(StandardMaterial {
+			base_color: Color::srgb(1.0, 0.45, 0.1),
+			unlit: true,
+			..Default::default()
+		})),
 		Transform::from_xyz(0.0, 0.0, 0.0),
 		ProbeMarker,
 	));
