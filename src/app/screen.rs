@@ -106,8 +106,6 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
             ui_state.dirty = true;
         }
 
-        ui.label("(Current arrow updates live)");
-
         ui.separator();
         ui.label("Wire point");
         ui.horizontal(|ui| {
@@ -165,9 +163,9 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
                 ui_state.dirty = true;
             }
         });
-        if ui.button("Recompute now").clicked() {
-            ui_state.set_probe_clicked = true;
-        }
+        // if ui.button("Recompute now").clicked() {
+        //     ui_state.set_probe_clicked = true;
+        // }
 
         ui.separator();
         if let Some(b) = ui_state.last_b {
