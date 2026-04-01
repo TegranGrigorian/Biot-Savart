@@ -67,6 +67,6 @@ impl Math {
         cords: Vector3::new(0.0, 1.0, 0.0)
         };
         let output = Math::calculate_biot_savart(wire, point, 2.0);
-        println!("Output: {}", &output.unwrap());
+        println!("Output: {:?}", &output.unwrap());
     }
 }
