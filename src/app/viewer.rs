@@ -26,7 +26,7 @@ impl Default for OrbitCamera {
 			yaw: -0.5,
 			pitch: -0.4,
 			rotate_sensitivity: 0.004,
-			zoom_sensitivity: 0.05,
+			zoom_sensitivity: 0.0025,
 			pan_sensitivity: 0.0025,
 			last_cursor_pos: None,
 		}
