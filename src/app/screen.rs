@@ -22,6 +22,8 @@ pub(crate) struct UiState {
     pub(crate) last_b_vec: Option<Vector3<f32>>,
     pub(crate) last_error: Option<String>,
     pub(crate) debug_info: String,
+    pub(crate) show_labels: bool,
+    pub(crate) show_arrows: bool,
     pub(crate) dirty: bool,
     add_wire_point_clicked: bool,
     clear_wire_clicked: bool,
@@ -34,6 +36,8 @@ pub fn run_viewer() {
             current: 1.0,
             wire_name: String::from("Wire 1"),
             probe_name: String::from("Probe"),
+            show_labels: true,
+            show_arrows: true,
             dirty: true,
             ..Default::default()
         })
@@ -177,6 +181,28 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
         }
         if let Some(err) = &ui_state.last_error {
             ui.colored_label(egui::Color32::RED, err);
+        }
+
+        ui.separator();
+        if ui
+            .button(if ui_state.show_labels {
+                "Hide labels"
+            } else {
+                "Show labels"
+            })
+            .clicked()
+        {
+            ui_state.show_labels = !ui_state.show_labels;
+        }
+        if ui
+            .button(if ui_state.show_arrows {
+                "Hide arrows"
+            } else {
+                "Show arrows"
+            })
+            .clicked()
+        {
+            ui_state.show_arrows = !ui_state.show_arrows;
         }
 
         ui.separator();
