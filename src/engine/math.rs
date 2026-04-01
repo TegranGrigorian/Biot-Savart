@@ -23,7 +23,6 @@ impl Math {
 
         let dl_length = total_length / (constants::DIVIDER as f32);
         Ok(dl_length)
-        
     }
 
     pub fn calculate_biot_savart_vector(
