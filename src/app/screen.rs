@@ -21,6 +21,7 @@ pub(crate) struct UiState {
     pub(crate) last_b: Option<f32>,
     pub(crate) last_b_vec: Option<Vector3<f32>>,
     pub(crate) last_error: Option<String>,
+    pub(crate) debug_info: String,
     pub(crate) dirty: bool,
     add_wire_point_clicked: bool,
     clear_wire_clicked: bool,
@@ -168,9 +169,24 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
         if let Some(b) = ui_state.last_b {
             ui.label(format!("|B| = {:.3e} T", b));
         }
+        if let Some(b_vec) = ui_state.last_b_vec {
+            ui.label(format!(
+                "B = ({:.3e}) i^ + ({:.3e}) j^ + ({:.3e}) k^ T",
+                b_vec.x, b_vec.y, b_vec.z
+            ));
+        }
         if let Some(err) = &ui_state.last_error {
             ui.colored_label(egui::Color32::RED, err);
         }
+
+        ui.separator();
+        ui.collapsing("Debug", |ui| {
+            if ui_state.debug_info.is_empty() {
+                ui.label("No debug data yet.");
+            } else {
+                ui.monospace(ui_state.debug_info.clone());
+            }
+        });
     });
 }
 
@@ -180,6 +196,7 @@ fn apply_ui_actions_system(mut ui_state: ResMut<UiState>) {
         ui_state.last_b = None;
         ui_state.last_b_vec = None;
         ui_state.last_error = None;
+        ui_state.debug_info.clear();
         ui_state.dirty = true;
         info!("Cleared wire points");
         ui_state.clear_wire_clicked = false;
@@ -202,14 +219,49 @@ fn apply_ui_actions_system(mut ui_state: ResMut<UiState>) {
 
         match Math::calculate_biot_savart_vector(wire, point, ui_state.current) {
             Ok(b_vec) => {
-                ui_state.last_b = Some(b_vec.norm());
+                let b_mag = b_vec.norm();
+                let wire_length: f32 = if ui_state.wire_points.len() >= 2 {
+                    ui_state
+                        .wire_points
+                        .windows(2)
+                        .map(|w| (w[1] - w[0]).norm())
+                        .sum()
+                } else {
+                    0.0
+                };
+
+                ui_state.last_b = Some(b_mag);
                 ui_state.last_b_vec = Some(b_vec);
                 ui_state.last_error = None;
+                ui_state.debug_info = format!(
+                    "points={} L={:.6} m I={:.3} A probe=({:.3},{:.3},{:.3}) B=({:.3e},{:.3e},{:.3e}) T |B|={:.3e} T",
+                    ui_state.wire_points.len(),
+                    wire_length,
+                    ui_state.current,
+                    ui_state.probe_x,
+                    ui_state.probe_y,
+                    ui_state.probe_z,
+                    b_vec.x,
+                    b_vec.y,
+                    b_vec.z,
+                    b_mag
+                );
+                info!("Compute debug: {}", ui_state.debug_info);
             }
             Err(err) => {
                 ui_state.last_b = None;
                 ui_state.last_b_vec = None;
                 ui_state.last_error = Some(err.clone());
+                ui_state.debug_info = format!(
+                    "compute error with points={} I={:.3} A probe=({:.3},{:.3},{:.3}): {}",
+                    ui_state.wire_points.len(),
+                    ui_state.current,
+                    ui_state.probe_x,
+                    ui_state.probe_y,
+                    ui_state.probe_z,
+                    err
+                );
+                info!("Compute debug: {}", ui_state.debug_info);
             }
         }
 
