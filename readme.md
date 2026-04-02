@@ -48,7 +48,7 @@ There is a CLI but its for development purposes only. It has the following comma
 
 ## How to Use
 ### Setup the Simulator
-1. Open Simualtor with ./Biot-Savart
+1. Open Simualtor with `./Biot-Savart`
 1. Set a current by clicking the current box adn entering in a value
 1. Add your first point in your wire, default is (0, 0, 0)
 1. Add your second point in your wire by adjusting the respective x, y, and z values.
