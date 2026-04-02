@@ -3,7 +3,7 @@ use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::window::PrimaryWindow;
 use bevy_egui::{egui, EguiContexts};
 
-use crate::app::config;
+use crate::app::config::{self};
 use crate::app::screen::UiState;
 use crate::constants;
 
@@ -41,12 +41,14 @@ pub(crate) struct ProbeMarker;
 pub(crate) struct SandboxGround;
 
 fn current_arrow_length(current_mag: f32) -> f32 {
-	(0.22 + current_mag.sqrt() * 0.28).clamp(0.22, 3.5)
+	(config::CURRENT_ARROW_MIN_LENGTH + current_mag.sqrt() * config::CURRENT_ARROW_SCALE)
+	.clamp(config::CURRENT_ARROW_MIN_LENGTH, config::CURRENT_ARROW_MAX_LENGTH)
 }
 
 fn b_arrow_length(b_mag: f32) -> f32 {
-	let normalized = (b_mag / 1.0e-9).max(1.0e-6);
-	(0.20 + normalized.powf(0.25) * 0.55).clamp(0.20, 4.5)
+	let normalized = (b_mag / config::B_ARROW_NORMALIZATION_FACTOR).max(config::B_ARROW_MIN_NORMALIZED);
+	(config::B_ARROW_MIN_LENGTH + normalized.powf(config::B_ARROW_EXPONENT) * config::B_ARROW_SCALE)
+	.clamp(config::B_ARROW_MIN_LENGTH, config::B_ARROW_MAX_LENGTH)
 }
 
 fn current_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
@@ -57,7 +59,7 @@ fn current_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
 	let p0 = ui_state.wire_points[0];
 	let p1 = ui_state.wire_points[1];
 	let seg = Vec3::new(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
-	if seg.length_squared() <= 1.0e-10 {
+	if seg.length_squared() <= config::SEG_LENGTH_SQUARED {
 		return None;
 	}
 
@@ -74,7 +76,7 @@ fn current_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
 	);
 	let arrow_len = current_arrow_length(current_mag);
 	Some((
-		mid - dir * (arrow_len * 0.5),
+		mid - dir * (arrow_len * 0.5), // another mid point
 		mid + dir * (arrow_len * 0.5),
 		current_mag,
 	))
@@ -103,9 +105,9 @@ fn sandbox_center_and_half_extent(ui_state: &UiState) -> (Vec3, f32) {
 		max = max.max(point);
 	}
 
-	let center = (min + max) * 0.5;
-	let raw_half = ((max - min) * 0.5).max_element();
-	let padded_half = (raw_half * 1.35).max(6.0);
+	let center = (min + max) * 0.5; // center, 0.5
+	let raw_half = ((max - min) * 0.5).max_element(); // guess what another center
+	let padded_half = (raw_half * 1.35).max(6.0); // max of 6 so dont go too far
 	(center, padded_half)
 }
 
@@ -117,7 +119,7 @@ pub(crate) fn setup_viewer(
 	commands.spawn((
 		Mesh3d(meshes.add(Sphere::new(0.01).mesh().uv(24, 16))),
 		MeshMaterial3d(materials.add(StandardMaterial {
-			base_color: config::POINT_COLOR, // Color::srgb(1.0, 0.45, 0.1)
+			base_color: config::POINT_COLOR,
 			unlit: true,
 			..Default::default()
 		})),
@@ -131,17 +133,17 @@ pub(crate) fn draw_dynamic_viewer_system(ui_state: Res<UiState>, mut gizmos: Giz
 		for seg in ui_state.wire_points.windows(2) {
 			let start = Vec3::new(seg[0].x, seg[0].y, seg[0].z);
 			let end = Vec3::new(seg[1].x, seg[1].y, seg[1].z);
-			gizmos.line(start, end, Color::srgb(1.0, 0.8, 0.2));
+			gizmos.line(start, end, config::WIRE_COLOR);
 		}
 	}
 
 	if ui_state.show_arrows {
 		if let Some((start, end, _)) = current_arrow(&ui_state) {
-			gizmos.arrow(start, end, Color::srgb(0.2, 1.0, 0.2));
+			gizmos.arrow(start, end, config::CURRENT_COLOR);
 		}
 
 		if let Some((start, end, _)) = b_arrow(&ui_state) {
-			gizmos.arrow(start, end, Color::srgb(0.2, 0.8, 1.0));
+			gizmos.arrow(start, end, config::B_FIELD_COLOR);
 		}
 	}
 }
@@ -197,7 +199,7 @@ pub(crate) fn orbit_camera_system(
 
 		if scroll.abs() > f32::EPSILON {
 			let zoom_factor = 1.0 - scroll * orbit.zoom_sensitivity;
-			orbit.radius = (orbit.radius * zoom_factor).clamp(0.5, 150.0);
+			orbit.radius = (orbit.radius * zoom_factor).clamp(config::ORBIT_MINIMUM_ZOOM, config::ORBIT_MAXIMUM_ZOOM);
 		}
 
 		let ctrl_pressed = keys.pressed(KeyCode::ControlLeft) || keys.pressed(KeyCode::ControlRight);
@@ -213,7 +215,7 @@ pub(crate) fn orbit_camera_system(
 
 		if rotate_mode {
 			orbit.yaw -= motion_delta.x * orbit.rotate_sensitivity;
-			orbit.pitch = (orbit.pitch - motion_delta.y * orbit.rotate_sensitivity).clamp(-1.54, 1.54);
+			orbit.pitch = (orbit.pitch - motion_delta.y * orbit.rotate_sensitivity).clamp(config::ORBIT_ROTATE_MOE * -1.0, config::ORBIT_ROTATE_MOE);
 		}
 
 		if pan_mode {
@@ -266,8 +268,8 @@ pub(crate) fn draw_overlay_labels_system(
 
 	let mut draw_label = |world_pos: Vec3, text: String, color: egui::Color32| {
 		if let Ok(screen_pos) = camera.world_to_viewport(camera_transform, world_pos) {
-			let galley = painter.layout_no_wrap(text, egui::FontId::proportional(16.0), color);
-			let mut pos = egui::pos2(screen_pos.x + 8.0, screen_pos.y - 8.0);
+			let galley = painter.layout_no_wrap(text, egui::FontId::proportional(16.0), color); // font size
+			let mut pos = egui::pos2(screen_pos.x + 8.0, screen_pos.y - 8.0); // 8 is label offeset
 			let mut rect = egui::Rect::from_min_size(pos, galley.size());
 
 			for _ in 0..8 {

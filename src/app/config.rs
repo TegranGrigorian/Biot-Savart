@@ -1,7 +1,8 @@
 use bevy::prelude::Color;
+
 // Camera configs
 pub const ROTATE_SENSITIVITY: f32 = 0.004;
-pub const ZOOM_SENSITIVITY:f32 = 0.0025;
+pub const ZOOM_SENSITIVITY:f32 = 0.05;
 pub const PAN_SENSITIVITY: f32 = 0.0025;
 
 // Arrow Configs
@@ -21,3 +22,17 @@ pub const SEG_LENGTH_SQUARED: f32 = 1.0e-10;
 
 // Point Color
 pub const POINT_COLOR: Color = Color::srgb(1.0, 0.45, 0.1);
+
+// Current Arrow Color
+pub const CURRENT_COLOR: Color = Color::srgb(0.2, 1.0, 0.2);
+
+// Wire Line Color
+pub const WIRE_COLOR: Color = Color::srgb(1.0, 0.8, 0.2);
+
+// B-field Vector Color
+pub const B_FIELD_COLOR: Color = Color::srgb(0.2, 0.8, 1.0);
+
+// Orbit configs
+pub const ORBIT_MINIMUM_ZOOM: f32 = 0.5;
+pub const ORBIT_MAXIMUM_ZOOM: f32 = 150.0;
+pub const ORBIT_ROTATE_MOE: f32 = 1.54;
