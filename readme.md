@@ -57,10 +57,12 @@ There is a CLI but its for development purposes only. It has the following comma
 
 ### Navigate the Viewer
 **Zoom** - Scroll up to zoom in and scroll down to zoom out.
+
 **Rotate** - Hold left click and drag to rotate the viewer.
-**Pan**:
-    * **Touchpad**: Hold right click and left click to pan the viewer.
-    * **Mouse**: Hold middle click to pan the viewer.
+
+**Pan**
+* **Touchpad**: Hold right click and left click to pan the viewer.
+* **Mouse**: Hold middle click to pan the viewer.
 
 ## Conclusion
 This isnt a really powerful or enterprise simulator. But it demonstrates my knowledge of vector calculus and applies it to a program. Thank you professor Clark for teaching this material and giving me the opportunity to create this project. I hope you enjoy it, if it works on your computer!
