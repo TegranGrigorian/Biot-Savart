@@ -17,6 +17,7 @@ pub fn get_arg_state(arg: &Vec<String>) {
             println!("Biot-Savart CLI for DEVELOPMENT");
             println!("   --help: opens help output, this output you are reading bozo");
             println!("   -t, --test: runs the test on the engine to ensure proper output");
+            println!("No flag will bring you right to the viewer. So `./Biot-Savart`")
         }
         else if _arg == "-t" || _arg == "--test"{
             println!("ENTERING TEST");
