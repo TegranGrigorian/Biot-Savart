@@ -46,5 +46,21 @@ There is a CLI but its for development purposes only. It has the following comma
 * `--help` - Displays commands
 * `--test` - Test the engine is calculating properly
 
+## How to Use
+### Setup the Simulator
+1. Open Simualtor with ./Biot-Savart
+1. Set a current by clicking the current box adn entering in a value
+1. Add your first point in your wire, default is (0, 0, 0)
+1. Add your second point in your wire by adjusting the respective x, y, and z values.
+1. Add a probe to the magnetic field with its own x, y, and z values.
+1. The viewer should now look like the image in begining of the readme.
+
+### Navigate the Viewer
+**Zoom** - Scroll up to zoom in and scroll down to zoom out.
+**Rotate** - Hold left click and drag to rotate the viewer.
+**Pan**:
+    * **Touchpad&**: Hold right click and left click to pan the viewer.
+    * **Mouse**: Hold middle click to pan the viewer.
+
 ## Conclusion
 This isnt a really powerful or enterprise simulator. But it demonstrates my knowledge of vector calculus and applies it to a program. Thank you professor Clark for teaching this material and giving me the opportunity to create this project. I hope you enjoy it, if it works on your computer!
