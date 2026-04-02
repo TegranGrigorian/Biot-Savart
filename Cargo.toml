@@ -7,3 +7,5 @@ edition = "2024"
 bevy = "0.18.1"
 bevy_egui = "0.39.1"
 nalgebra = "0.34.2"
+
+#[warn(non_snake_case)]

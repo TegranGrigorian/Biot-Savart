@@ -1,5 +1,5 @@
 use bevy::prelude::Color;
-use bevy_egui::{egui, EguiContexts};
+use bevy_egui::egui;
 
 // Camera configs
 pub const ROTATE_SENSITIVITY: f32 = 0.004;
