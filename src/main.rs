@@ -1,7 +1,6 @@
 // use Biot_Savart::test::test_biot_savart;
 mod constants;
-use Biot_Savart::{app::screen::run_viewer};
+use Biot_Savart::{app::screen::run_viewer, cli::{self, get_arg_state, get_args}};
 fn main() {
-    run_viewer(); // view /app/viewer.rs for this code
-    // test_biot_savart();
+    let arg_output = get_arg_state(&get_args());
 }
