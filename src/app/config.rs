@@ -45,3 +45,10 @@ pub const ORBIT_ROTATE_MOE: f32 = 1.54;
 
 // Font configs
 pub const FONT_SIZE: f32 = 16.0;
+
+// Sandbox Configs
+pub const ZERO_PLANE_COLOR: Color = Color::srgb(0.15, 0.15, 0.18);
+pub const PLANE_MESH_SIZE: f32 = 20.0;
+
+// Sidebar dragable textbox
+pub const DRAGABLE_TEXTBOX_SPEED: f32 = 0.1;

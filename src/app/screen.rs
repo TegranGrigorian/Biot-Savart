@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin, EguiPrimaryContextPass};
 use nalgebra::Vector3;
-use crate::app::viewer;
+use crate::app::{config, viewer};
 use crate::engine::components::wire::Wire;
 use crate::engine::components::point::Point;
 use crate::engine::math::Math;
@@ -30,6 +30,7 @@ pub(crate) struct UiState {
     set_probe_clicked: bool,
 }
 
+// guess what, runs the viewer crazy ik
 pub fn run_viewer() {
     App::new()
         .insert_resource(UiState {
@@ -61,17 +62,20 @@ pub fn run_viewer() {
         .run();
 }
 
+// get default situated
 fn setup_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    // default spawns, would put these in configs but you shouldnt ever change these they are just goofy values
     commands.spawn((
         Camera3d::default(),
         viewer::OrbitCamera::default(),
         Transform::from_xyz(6.0, 6.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
+    // let there be light!
     commands.spawn((
         PointLight {
             intensity: 3000.0,
@@ -81,13 +85,15 @@ fn setup_scene(
         Transform::from_xyz(8.0, 12.0, 8.0),
     ));
 
+    // if you dont want the floor you can comment the "commands.spawn" below, but tahts werid adn u should go see a therapist
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(20.0, 20.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.15, 0.15, 0.18))),
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(config::PLANE_MESH_SIZE, config::PLANE_MESH_SIZE))),
+        MeshMaterial3d(materials.add(config::ZERO_PLANE_COLOR)),
         viewer::SandboxGround,
     ));
 }
 
+// alot of this code kind of documents itself so im not going to add comments
 fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
     egui::SidePanel::left("controls").show(contexts.ctx_mut().unwrap(), |ui| {
         ui.heading("Biot-Savart Controls");
@@ -100,7 +106,7 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
 
         ui.label("Current (A)");
         if ui
-            .add(egui::DragValue::new(&mut ui_state.current).speed(0.1).prefix("A: "))
+            .add(egui::DragValue::new(&mut ui_state.current).speed(config::DRAGABLE_TEXTBOX_SPEED).prefix("A: "))
             .changed()
         {
             ui_state.dirty = true;
@@ -110,19 +116,19 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
         ui.label("Wire point");
         ui.horizontal(|ui| {
             if ui
-                .add(egui::DragValue::new(&mut ui_state.wire_x).speed(0.1).prefix("x: "))
+                .add(egui::DragValue::new(&mut ui_state.wire_x).speed(config::DRAGABLE_TEXTBOX_SPEED).prefix("x: "))
                 .changed()
             {
                 ui_state.dirty = true;
             }
             if ui
-                .add(egui::DragValue::new(&mut ui_state.wire_y).speed(0.1).prefix("y: "))
+                .add(egui::DragValue::new(&mut ui_state.wire_y).speed(config::DRAGABLE_TEXTBOX_SPEED).prefix("y: "))
                 .changed()
             {
                 ui_state.dirty = true;
             }
             if ui
-                .add(egui::DragValue::new(&mut ui_state.wire_z).speed(0.1).prefix("z: "))
+                .add(egui::DragValue::new(&mut ui_state.wire_z).speed(config::DRAGABLE_TEXTBOX_SPEED).prefix("z: "))
                 .changed()
             {
                 ui_state.dirty = true;
@@ -145,27 +151,24 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
         ui.label("Probe point");
         ui.horizontal(|ui| {
             if ui
-                .add(egui::DragValue::new(&mut ui_state.probe_x).speed(0.1).prefix("x: "))
+                .add(egui::DragValue::new(&mut ui_state.probe_x).speed(config::DRAGABLE_TEXTBOX_SPEED).prefix("x: "))
                 .changed()
             {
                 ui_state.dirty = true;
             }
             if ui
-                .add(egui::DragValue::new(&mut ui_state.probe_y).speed(0.1).prefix("y: "))
+                .add(egui::DragValue::new(&mut ui_state.probe_y).speed(config::DRAGABLE_TEXTBOX_SPEED).prefix("y: "))
                 .changed()
             {
                 ui_state.dirty = true;
             }
             if ui
-                .add(egui::DragValue::new(&mut ui_state.probe_z).speed(0.1).prefix("z: "))
+                .add(egui::DragValue::new(&mut ui_state.probe_z).speed(config::DRAGABLE_TEXTBOX_SPEED).prefix("z: "))
                 .changed()
             {
                 ui_state.dirty = true;
             }
         });
-        // if ui.button("Recompute now").clicked() {
-        //     ui_state.set_probe_clicked = true;
-        // }
 
         ui.separator();
         if let Some(b) = ui_state.last_b {
@@ -241,7 +244,7 @@ fn apply_ui_actions_system(mut ui_state: ResMut<UiState>) {
             Vector3::new(ui_state.probe_x, ui_state.probe_y, ui_state.probe_z),
         );
 
-        match Math::calculate_biot_savart_vector(wire, point, ui_state.current) {
+        match Math::calculate_biot_savart_vector(wire, point, ui_state.current) { // error handling output, you shouldnt really want to read this but if you do, why? Are you doing ok?
             Ok(b_vec) => {
                 let b_mag = b_vec.norm();
                 let wire_length: f32 = if ui_state.wire_points.len() >= 2 {
