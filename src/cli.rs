@@ -8,6 +8,10 @@ pub fn get_args() -> Vec<String>{
 }
 
 pub fn get_arg_state(arg: &Vec<String>) {
+    if arg.is_empty() {
+        println!("ATTEMPTING TO ENTERING VIEWER");
+        run_viewer();
+    }
     for _arg in arg {
         if _arg == "--help" {
             println!("Biot-Savart CLI for DEVELOPMENT");
@@ -17,10 +21,9 @@ pub fn get_arg_state(arg: &Vec<String>) {
         else if _arg == "-t" || _arg == "--test"{
             println!("ENTERING TEST");
             test::test_biot_savart();
+        } else {
+            println!("Blud what flag did u enter? do --help");
         }
     }
-    if arg.is_empty() {
-        println!("ATTEMPTING TO ENTERING VIEWER");
-        run_viewer();
-    }
+    
 }
