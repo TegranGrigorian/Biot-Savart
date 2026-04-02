@@ -19,13 +19,14 @@ pub(crate) struct OrbitCamera {
 	pub(crate) last_cursor_pos: Option<Vec2>,
 }
 
+// implement default settings derived from the configs for the OrbitCamera
 impl Default for OrbitCamera {
 	fn default() -> Self {
 		Self {
 			target: Vec3::ZERO,
-			radius: 12.0,
-			yaw: -0.5,
-			pitch: -0.4,
+			radius: 12.0, // camera radius
+			yaw: -0.5, // default yaw
+			pitch: -0.4, // default pitch
 			rotate_sensitivity: config::ROTATE_SENSITIVITY,
 			zoom_sensitivity: config::ZOOM_SENSITIVITY,
 			pan_sensitivity: config::PAN_SENSITIVITY,
@@ -40,17 +41,20 @@ pub(crate) struct ProbeMarker;
 #[derive(Component)]
 pub(crate) struct SandboxGround;
 
+// calcultae the size of the arrow scaled on the current magnitude, like a vector
 fn current_arrow_length(current_mag: f32) -> f32 {
 	(config::CURRENT_ARROW_MIN_LENGTH + current_mag.sqrt() * config::CURRENT_ARROW_SCALE)
 	.clamp(config::CURRENT_ARROW_MIN_LENGTH, config::CURRENT_ARROW_MAX_LENGTH)
 }
 
+// same as comment above, scaled to magnitude
 fn b_arrow_length(b_mag: f32) -> f32 {
 	let normalized = (b_mag / config::B_ARROW_NORMALIZATION_FACTOR).max(config::B_ARROW_MIN_NORMALIZED);
 	(config::B_ARROW_MIN_LENGTH + normalized.powf(config::B_ARROW_EXPONENT) * config::B_ARROW_SCALE)
 	.clamp(config::B_ARROW_MIN_LENGTH, config::B_ARROW_MAX_LENGTH)
 }
 
+// show the current arrow
 fn current_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
 	if ui_state.wire_points.len() < 2 {
 		return None;
@@ -58,13 +62,13 @@ fn current_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
 
 	let p0 = ui_state.wire_points[0];
 	let p1 = ui_state.wire_points[1];
-	let seg = Vec3::new(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
-	if seg.length_squared() <= config::SEG_LENGTH_SQUARED {
+	let seg = Vec3::new(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z); // new vector of distance
+	if seg.length_squared() <= config::SEG_LENGTH_SQUARED { // magntiude
 		return None;
 	}
 
 	let current_mag = ui_state.current.abs();
-	if current_mag <= f32::EPSILON {
+	if current_mag <= f32::EPSILON { // aproximate error
 		return None;
 	}
 
@@ -82,6 +86,7 @@ fn current_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
 	))
 }
 
+// show the b arrow
 fn b_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
 	let b_vec = ui_state.last_b_vec?;
 	let b = Vec3::new(b_vec.x, b_vec.y, b_vec.z);
@@ -95,6 +100,7 @@ fn b_arrow(ui_state: &UiState) -> Option<(Vec3, Vec3, f32)> {
 	Some((probe, probe + b.normalize() * b_len, b_mag))
 }
 
+// center components at sandbox center
 fn sandbox_center_and_half_extent(ui_state: &UiState) -> (Vec3, f32) {
 	let mut min = Vec3::new(ui_state.probe_x, ui_state.probe_y, ui_state.probe_z);
 	let mut max = min;
@@ -111,6 +117,7 @@ fn sandbox_center_and_half_extent(ui_state: &UiState) -> (Vec3, f32) {
 	(center, padded_half)
 }
 
+// setup the viewer with defaults
 pub(crate) fn setup_viewer(
 	mut commands: Commands,
 	mut meshes: ResMut<Assets<Mesh>>,
@@ -128,6 +135,7 @@ pub(crate) fn setup_viewer(
 	));
 }
 
+// draw the dynamic view systems wit the components defined above
 pub(crate) fn draw_dynamic_viewer_system(ui_state: Res<UiState>, mut gizmos: Gizmos) {
 	if ui_state.wire_points.len() >= 2 {
 		for seg in ui_state.wire_points.windows(2) {
@@ -148,6 +156,7 @@ pub(crate) fn draw_dynamic_viewer_system(ui_state: Res<UiState>, mut gizmos: Giz
 	}
 }
 
+/// update
 pub(crate) fn update_sandbox_ground_system(
 	ui_state: Res<UiState>,
 	mut ground_q: Query<&mut Transform, With<SandboxGround>>,
@@ -161,6 +170,7 @@ pub(crate) fn update_sandbox_ground_system(
 	}
 }
 
+// orbit camera system scrolls and movement tech
 pub(crate) fn orbit_camera_system(
 	mouse_buttons: Res<ButtonInput<MouseButton>>,
 	keys: Res<ButtonInput<KeyCode>>,
@@ -183,7 +193,7 @@ pub(crate) fn orbit_camera_system(
 		.single()
 		.ok()
 		.and_then(|window| window.cursor_position());
-
+	// all the movemnt code very verbose
 	for (mut orbit, mut transform) in &mut camera_q {
 		let cursor_delta = match (cursor_pos, orbit.last_cursor_pos) {
 			(Some(current), Some(last)) => current - last,
@@ -204,7 +214,7 @@ pub(crate) fn orbit_camera_system(
 
 		let ctrl_pressed = keys.pressed(KeyCode::ControlLeft) || keys.pressed(KeyCode::ControlRight);
 
-		let pan_mode = mouse_buttons.pressed(MouseButton::Middle)
+		let pan_mode = mouse_buttons.pressed(MouseButton::Middle) // let the pan move via control: touch pad users, or middle mouse: mouse users
 			|| (ctrl_pressed && mouse_buttons.pressed(MouseButton::Left))
 			|| ((mouse_buttons.pressed(MouseButton::Right) || mouse_buttons.pressed(MouseButton::Left))
 				&& (keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight)));
@@ -215,7 +225,8 @@ pub(crate) fn orbit_camera_system(
 
 		if rotate_mode {
 			orbit.yaw -= motion_delta.x * orbit.rotate_sensitivity;
-			orbit.pitch = (orbit.pitch - motion_delta.y * orbit.rotate_sensitivity).clamp(config::ORBIT_ROTATE_MOE * -1.0, config::ORBIT_ROTATE_MOE);
+			orbit.pitch = (orbit.pitch - motion_delta.y * orbit.rotate_sensitivity)
+			.clamp(config::ORBIT_ROTATE_MOE * -1.0, config::ORBIT_ROTATE_MOE);
 		}
 
 		if pan_mode {
@@ -232,6 +243,7 @@ pub(crate) fn orbit_camera_system(
 	}
 }
 
+// update viewer entites with changes from ui_state
 pub(crate) fn update_viewer_entities_system(
 	ui_state: Res<UiState>,
 	mut probe_q: Query<&mut Transform, With<ProbeMarker>>,
@@ -243,6 +255,7 @@ pub(crate) fn update_viewer_entities_system(
 	}
 }
 
+// overlays, if show labels enasbled or not or any other circumstance
 pub(crate) fn draw_overlay_labels_system(
 	mut contexts: EguiContexts,
 	ui_state: Res<UiState>,
@@ -266,6 +279,7 @@ pub(crate) fn draw_overlay_labels_system(
 	));
 	let mut occupied: Vec<egui::Rect> = Vec::new();
 
+	// draw label functions, done for all the vector information in the sandbox
 	let mut draw_label = |world_pos: Vec3, text: String, color: egui::Color32| {
 		if let Ok(screen_pos) = camera.world_to_viewport(camera_transform, world_pos) {
 			let galley = painter.layout_no_wrap(text, egui::FontId::proportional(config::FONT_SIZE), color); // font size
@@ -293,6 +307,7 @@ pub(crate) fn draw_overlay_labels_system(
 		}
 	};
 
+	// all label drawing code
 	if let Some(first) = ui_state.wire_points.first() {
 		draw_label(
 			Vec3::new(first.x, first.y, first.z) + Vec3::new(0.0, 0.22, 0.0), // little above
