@@ -11,6 +11,19 @@ This project was done for MTH 300 - Vector Analysis. The goal was to create a pr
 - 3D Viewer for better undestaanding of magnetic field vectors
 
 ## How to Use
+### Releases
+1. Donwload the latest release from the [Releases](https://github.com/TegranGrigorian/Biot-Savart/releases) page.
+    1. Only compiling for linux and X86, if you use a different OS or architecture, you will need to compile the source code.
+1. Allow the executable to run
+    ```shell
+    chmod +x ./Biot-Savart
+    ```
+1. Run the executable
+    ```shell
+    ./Biot-Savart
+    ```
+
+### Source Code
 1. Clone the repository to your local machine.
 1. Compile program with Cargo
     ```shell
@@ -29,3 +42,6 @@ This project was done for MTH 300 - Vector Analysis. The goal was to create a pr
 There is a CLI but its for development purposes only. It has the following commands:
 * `--help` - Displays commands
 * `--test` - Test the engine is calculating properly
+
+## Conclusion
+This isnt a really powerful or enterprise simulator. But it demonstrates my knowledge of vector calculus and applies it to a program. Thank you professor Clark for teaching this material and giving me the opportunity to create this project. I hope you enjoy it, if it works on your computer!
