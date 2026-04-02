@@ -12,6 +12,8 @@ This project was done for MTH 300 - Vector Analysis. The goal was to create a pr
 - 3D Viewer for better undestaanding of magnetic field vectors
 
 ## How to Use
+### READ THIS!!!!
+0. **Install [Dependencies](https://github.com/bevyengine/bevy/blob/latest/docs/linux_dependencies.md) for Bevy!!!!!!**
 ### Releases
 1. Donwload the latest release from the [Releases](https://github.com/TegranGrigorian/Biot-Savart/releases) page.
     1. Only compiling for linux and X86, if you use a different OS or architecture, you will need to compile the source code.
