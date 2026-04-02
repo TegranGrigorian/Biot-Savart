@@ -59,7 +59,7 @@ There is a CLI but its for development purposes only. It has the following comma
 **Zoom** - Scroll up to zoom in and scroll down to zoom out.
 **Rotate** - Hold left click and drag to rotate the viewer.
 **Pan**:
-    * **Touchpad&**: Hold right click and left click to pan the viewer.
+    * **Touchpad**: Hold right click and left click to pan the viewer.
     * **Mouse**: Hold middle click to pan the viewer.
 
 ## Conclusion
