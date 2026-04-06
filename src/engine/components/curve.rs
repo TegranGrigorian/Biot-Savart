@@ -14,7 +14,7 @@ impl Curve {
     }
 
     // parse curve equation
-    pub fn strip_equation(equation: &String){
+    pub fn strip_space_equation(equation: &String){
         let equation_stripped: Vec<&str> = equation.split(" ").collect();
         println!("{:?}", String::from_iter(equation_stripped));
     }
