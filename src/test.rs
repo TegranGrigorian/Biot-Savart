@@ -32,5 +32,5 @@ pub fn test_biot_savart() {
 pub fn test_equation_strip() {
     // equation in stirng form
     let equation = String::from("y = mx + b");
-    Curve::strip_space_equation(&equation);
+    Curve::strip_parts_equation(&Curve::strip_space_equation(&equation));
 }
