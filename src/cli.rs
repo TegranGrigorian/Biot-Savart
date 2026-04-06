@@ -21,7 +21,7 @@ pub fn get_arg_state(arg: &Vec<String>) {
         }
         else if _arg == "-t" || _arg == "--test"{
             println!("ENTERING TEST");
-            test::test_biot_savart();
+            test::test_equation_strip();
         } else {
             println!("Blud what flag did u enter? do --help");
         }
