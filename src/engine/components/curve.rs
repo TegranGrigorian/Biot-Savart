@@ -1,7 +1,5 @@
 use nalgebra::Vector3;
 
-// ── Tokeniser ─────────────────────────────────────────────────────────────────
-
 #[derive(Debug, Clone, PartialEq)]
 enum Token {
     Num(f64),
@@ -74,8 +72,6 @@ fn tokenize(src: &str) -> Result<Vec<Token>, String> {
     Ok(tokens)
 }
 
-// ── AST ───────────────────────────────────────────────────────────────────────
-
 #[derive(Debug, Clone)]
 enum Expr {
     Num(f64),
@@ -84,8 +80,6 @@ enum Expr {
     UnaryMinus(Box<Expr>),
     Call { name: String, arg: Box<Expr> },
 }
-
-// ── Recursive-descent parser ──────────────────────────────────────────────────
 
 struct Parser {
     tokens: Vec<Token>,
@@ -207,8 +201,6 @@ impl Parser {
     }
 }
 
-// ── Evaluator ─────────────────────────────────────────────────────────────────
-
 fn eval(expr: &Expr, t: f64) -> Result<f64, String> {
     match expr {
         Expr::Num(n) => Ok(*n),
@@ -251,9 +243,6 @@ fn eval(expr: &Expr, t: f64) -> Result<f64, String> {
     }
 }
 
-// ── Public parametric API ─────────────────────────────────────────────────────
-
-/// A compiled single-variable expression in `t`.
 pub struct CompiledExpr(Expr);
 
 impl CompiledExpr {
@@ -278,8 +267,6 @@ impl CompiledExpr {
     }
 }
 
-/// A parametric curve r(t) = (x(t), y(t), z(t)) over [t_min, t_max].
-/// Works for any shape — circles, helices, lines, spirals, custom formulas.
 pub struct ParametricCurve {
     pub name: String,
     x: CompiledExpr,
@@ -290,7 +277,6 @@ pub struct ParametricCurve {
 }
 
 impl ParametricCurve {
-    /// Compile x(t), y(t), z(t) expressions and validate the t range.
     pub fn new(
         name: String,
         x_expr: &str,
@@ -312,7 +298,6 @@ impl ParametricCurve {
         })
     }
 
-    /// Sample `n` evenly-spaced points along the curve and return them as wire points.
     pub fn sample(&self, n: usize) -> Result<Vec<Vector3<f32>>, String> {
         if n < 2 {
             return Err("samples must be >= 2".to_string());
@@ -333,8 +318,6 @@ impl ParametricCurve {
     }
 }
 
-// ── Legacy Curve (kept for test compatibility) ────────────────────────────────
-
 pub struct Curve {
     pub name: String,
     pub points: Vec<Vector3<f32>>,
@@ -342,7 +325,6 @@ pub struct Curve {
 
 impl Curve {
     const MATH_EXPRESSIONS: &[&str] = &["+", "-", "/", "*", "="];
-
     pub fn new(name: String, points: Vec<Vector3<f32>>) -> Curve {
         Curve { name, points }
     }
