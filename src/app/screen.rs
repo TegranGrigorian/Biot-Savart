@@ -36,6 +36,7 @@ pub(crate) struct UiState {
     pub(crate) param_t_max: f32,
     pub(crate) param_samples: u32,
     generate_parametric_clicked: bool,
+    pub(crate) show_floor: bool,
 }
 
 // guess what, runs the viewer crazy ik
@@ -54,6 +55,7 @@ pub fn run_viewer() {
             param_t_min: 0.0,
             param_t_max: 6.2832,
             param_samples: 200,
+            show_floor: false,
             ..Default::default()
         })
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -70,6 +72,7 @@ pub fn run_viewer() {
         .add_systems(EguiPrimaryContextPass, (ui_panel_system, viewer::draw_overlay_labels_system))
         .add_systems(Update, viewer::orbit_camera_system)
         .add_systems(Update, viewer::update_sandbox_ground_system)
+        .add_systems(Update, update_floor_visibility_system)
         .add_systems(Update, viewer::draw_dynamic_viewer_system)
         .add_systems(Update, viewer::update_viewer_entities_system)
         .add_systems(Update, apply_ui_actions_system)
@@ -103,6 +106,7 @@ fn setup_scene(
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(config::PLANE_MESH_SIZE, config::PLANE_MESH_SIZE))),
         MeshMaterial3d(materials.add(config::ZERO_PLANE_COLOR)),
+        Visibility::Hidden,
         viewer::SandboxGround,
     ));
 }
@@ -243,6 +247,16 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
         {
             ui_state.show_arrows = !ui_state.show_arrows;
         }
+        if ui
+            .button(if ui_state.show_floor {
+                "Hide floor"
+            } else {
+                "Show floor"
+            })
+            .clicked()
+        {
+            ui_state.show_floor = !ui_state.show_floor;
+        }
 
         ui.separator();
         ui.collapsing("Debug", |ui| {
@@ -253,6 +267,15 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
             }
         });
     });
+}
+
+fn update_floor_visibility_system(
+    ui_state: Res<UiState>,
+    mut ground_q: Query<&mut Visibility, With<viewer::SandboxGround>>,
+) {
+    if let Ok(mut vis) = ground_q.single_mut() {
+        *vis = if ui_state.show_floor { Visibility::Visible } else { Visibility::Hidden };
+    }
 }
 
 fn apply_ui_actions_system(mut ui_state: ResMut<UiState>) {
