@@ -4,6 +4,7 @@ use nalgebra::Vector3;
 use crate::app::{config, viewer};
 use crate::engine::components::wire::Wire;
 use crate::engine::components::point::Point;
+use crate::engine::components::curve::ParametricCurve;
 use crate::engine::math::Math;
 
 #[derive(Resource, Default)]
@@ -28,6 +29,13 @@ pub(crate) struct UiState {
     add_wire_point_clicked: bool,
     clear_wire_clicked: bool,
     set_probe_clicked: bool,
+    pub(crate) param_x_expr: String,
+    pub(crate) param_y_expr: String,
+    pub(crate) param_z_expr: String,
+    pub(crate) param_t_min: f32,
+    pub(crate) param_t_max: f32,
+    pub(crate) param_samples: u32,
+    generate_parametric_clicked: bool,
 }
 
 // guess what, runs the viewer crazy ik
@@ -40,6 +48,12 @@ pub fn run_viewer() {
             show_labels: true,
             show_arrows: true,
             dirty: true,
+            param_x_expr: String::from("cos(t)"),
+            param_y_expr: String::from("sin(t)"),
+            param_z_expr: String::from("0"),
+            param_t_min: 0.0,
+            param_t_max: 6.2832,
+            param_samples: 200,
             ..Default::default()
         })
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -143,6 +157,30 @@ fn ui_panel_system(mut contexts: EguiContexts, mut ui_state: ResMut<UiState>) {
         ui.label(format!("Wire points: {}", ui_state.wire_points.len()));
 
         ui.separator();
+        ui.collapsing("Parametric Wire", |ui| {
+            ui.label("x(t) =");
+            ui.text_edit_singleline(&mut ui_state.param_x_expr);
+            ui.label("y(t) =");
+            ui.text_edit_singleline(&mut ui_state.param_y_expr);
+            ui.label("z(t) =");
+            ui.text_edit_singleline(&mut ui_state.param_z_expr);
+            ui.horizontal(|ui| {
+                ui.label("t:");
+                ui.add(egui::DragValue::new(&mut ui_state.param_t_min).speed(0.01).prefix("min: "));
+                ui.add(egui::DragValue::new(&mut ui_state.param_t_max).speed(0.01).prefix("max: "));
+            });
+            ui.horizontal(|ui| {
+                ui.label("Samples:");
+                ui.add(egui::DragValue::new(&mut ui_state.param_samples).speed(1).range(2..=10000_u32));
+            });
+            if ui.button("Generate parametric wire").clicked() {
+                ui_state.generate_parametric_clicked = true;
+            }
+            ui.label(egui::RichText::new("Functions: sin cos tan sqrt abs exp ln log floor ceil").small().weak());
+            ui.label(egui::RichText::new("Constants: pi e    Ops: + - * / ^").small().weak());
+        });
+
+        ui.separator();
         ui.label("Probe name");
         if ui.text_edit_singleline(&mut ui_state.probe_name).changed() {
             ui_state.dirty = true;
@@ -227,6 +265,30 @@ fn apply_ui_actions_system(mut ui_state: ResMut<UiState>) {
         ui_state.dirty = true;
         info!("Cleared wire points");
         ui_state.clear_wire_clicked = false;
+    }
+
+    if ui_state.generate_parametric_clicked {
+        ui_state.generate_parametric_clicked = false;
+        let result = ParametricCurve::new(
+            ui_state.wire_name.clone(),
+            &ui_state.param_x_expr,
+            &ui_state.param_y_expr,
+            &ui_state.param_z_expr,
+            ui_state.param_t_min as f64,
+            ui_state.param_t_max as f64,
+        ).and_then(|curve| curve.sample(ui_state.param_samples as usize));
+        match result {
+            Ok(points) => {
+                ui_state.wire_points = points;
+                ui_state.last_error = None;
+                ui_state.dirty = true;
+                info!("Generated {} parametric wire points", ui_state.wire_points.len());
+            }
+            Err(err) => {
+                ui_state.last_error = Some(format!("Parametric error: {err}"));
+                info!("Parametric error: {err}");
+            }
+        }
     }
 
     if ui_state.add_wire_point_clicked {
