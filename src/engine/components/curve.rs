@@ -1,6 +1,7 @@
 use nalgebra::Vector3;
 
 #[derive(Debug, Clone, PartialEq)]
+// Expressions for token object
 enum Token {
     Num(f64),
     T,
@@ -14,7 +15,7 @@ enum Token {
     Ident(String),
 }
 
-fn tokenize(src: &str) -> Result<Vec<Token>, String> {
+fn tokenize(src: &str) -> Result<Vec<Token>, String> { // a whole lotta expressions
     let mut tokens = Vec::new();
     let mut chars = src.chars().peekable();
 
@@ -50,7 +51,7 @@ fn tokenize(src: &str) -> Result<Vec<Token>, String> {
                 let val: f64 = num.parse().map_err(|_| format!("invalid number: {num}"))?;
                 tokens.push(Token::Num(val));
             }
-            'a'..='z' | 'A'..='Z' | '_' => {
+            'a'..='z' | 'A'..='Z' | '_' => { // find the char
                 let mut ident = String::new();
                 while let Some(&c) = chars.peek() {
                     if c.is_alphanumeric() || c == '_' {
@@ -86,7 +87,7 @@ struct Parser {
     pos: usize,
 }
 
-impl Parser {
+impl Parser { // not going ot comment this much but this parses the string and gets the different operations for it
     fn new(tokens: Vec<Token>) -> Self {
         Parser { tokens, pos: 0 }
     }
@@ -171,7 +172,7 @@ impl Parser {
         }
         Ok(base)
     }
-
+    // special chars, e and pi
     fn parse_atom(&mut self) -> Result<Expr, String> {
         match self.peek().cloned() {
             Some(Token::Num(n)) => { self.next_tok(); Ok(Expr::Num(n)) }
@@ -224,7 +225,7 @@ fn eval(expr: &Expr, t: f64) -> Result<f64, String> {
                 _   => Err(format!("unknown op '{op}'")),
             }
         }
-        Expr::Call { name, arg } => {
+        Expr::Call { name, arg } => { // special operations ur welcome :)
             let v = eval(arg, t)?;
             match name.as_str() {
                 "sin"   => Ok(v.sin()),
@@ -245,7 +246,7 @@ fn eval(expr: &Expr, t: f64) -> Result<f64, String> {
 
 pub struct CompiledExpr(Expr);
 
-impl CompiledExpr {
+impl CompiledExpr { // recompiled expression for the engine to use and calc with
     pub fn compile(src: &str) -> Result<Self, String> {
         if src.trim().is_empty() {
             return Err("expression is empty".to_string());
@@ -267,7 +268,7 @@ impl CompiledExpr {
     }
 }
 
-pub struct ParametricCurve {
+pub struct ParametricCurve { // parameterizd to var t
     pub name: String,
     x: CompiledExpr,
     y: CompiledExpr,
@@ -318,39 +319,39 @@ impl ParametricCurve {
     }
 }
 
-pub struct Curve {
-    pub name: String,
-    pub points: Vec<Vector3<f32>>,
-}
+// pub struct Curve {
+//     pub name: String,
+//     pub points: Vec<Vector3<f32>>,
+// }
 
-impl Curve {
-    const MATH_EXPRESSIONS: &[&str] = &["+", "-", "/", "*", "="];
-    pub fn new(name: String, points: Vec<Vector3<f32>>) -> Curve {
-        Curve { name, points }
-    }
+// impl Curve {
+//     const MATH_EXPRESSIONS: &[&str] = &["+", "-", "/", "*", "="];
+//     pub fn new(name: String, points: Vec<Vector3<f32>>) -> Curve {
+//         Curve { name, points }
+//     }
 
-    pub fn strip_space_equation(equation: &String) -> String {
-        let parts: Vec<&str> = equation.split(' ').collect();
-        String::from_iter(parts)
-    }
+//     pub fn strip_space_equation(equation: &String) -> String {
+//         let parts: Vec<&str> = equation.split(' ').collect();
+//         String::from_iter(parts)
+//     }
 
-    pub fn strip_parts_equation(equation: &String) {
-        let mut parts: Vec<String> = vec![];
-        let mut current_part = String::new();
-        for ch in equation.chars() {
-            if Self::MATH_EXPRESSIONS.contains(&ch.to_string().as_str()) {
-                if !current_part.is_empty() {
-                    parts.push(current_part.clone());
-                }
-                parts.push(ch.to_string());
-                current_part.clear();
-            } else if ch != ' ' {
-                current_part.push(ch);
-            }
-        }
-        if !current_part.is_empty() {
-            parts.push(current_part);
-        }
-        println!("{:?}", parts);
-    }
-}
+//     pub fn strip_parts_equation(equation: &String) {
+//         let mut parts: Vec<String> = vec![];
+//         let mut current_part = String::new();
+//         for ch in equation.chars() {
+//             if Self::MATH_EXPRESSIONS.contains(&ch.to_string().as_str()) {
+//                 if !current_part.is_empty() {
+//                     parts.push(current_part.clone());
+//                 }
+//                 parts.push(ch.to_string());
+//                 current_part.clear();
+//             } else if ch != ' ' {
+//                 current_part.push(ch);
+//             }
+//         }
+//         if !current_part.is_empty() {
+//             parts.push(current_part);
+//         }
+//         println!("{:?}", parts);
+//     }
+// }
