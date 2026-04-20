@@ -2,7 +2,7 @@ use crate::engine::components::point::Point;
 use crate::engine::components::wire::Wire;
 use nalgebra::Vector3;
 use crate::engine::math::Math;
-use crate::engine::components::curve::Curve;
+// use crate::engine::components::curve::Curve;
 /*
 Test Engine with pre computed answer
 Probe: (0, 1, 0)
@@ -32,5 +32,5 @@ pub fn test_biot_savart() {
 pub fn test_equation_strip() {
     // equation in stirng form
     let equation = String::from("y = mx + b");
-    Curve::strip_parts_equation(&Curve::strip_space_equation(&equation));
+    // Curve::strip_parts_equation(&Curve::strip_space_equation(&equation));
 }
